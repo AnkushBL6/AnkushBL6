@@ -1,0 +1,37 @@
+name: contribution skyline
+
+on:
+  schedule:
+    - cron: "23 0 * * *" # daily
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["scripts/**", ".github/workflows/skyline.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  skyline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Render the 3D contribution skyline (light + dark)
+        run: python scripts/skyline.py --user "${{ github.repository_owner }}" --out dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to the output branch
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: output
+          build_dir: dist
+          commit_message: "chore: refresh contribution skyline"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
